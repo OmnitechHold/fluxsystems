@@ -1,0 +1,180 @@
+{
+  "name": "cloud-deployment-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example cloud deployment configuration for multi-cloud environments",
+  "scripts": {
+    "deploy:aws": "terraform apply -var-file=aws.tfvars",
+    "deploy:azure": "terraform apply -var-file=azure.tfvars",
+    "deploy:gcp": "terraform apply -var-file=gcp.tfvars",
+    "deploy:all": "npm run deploy:aws && npm run deploy:azure && npm run deploy:gcp",
+    "destroy:aws": "terraform destroy -var-file=aws.tfvars",
+    "destroy:azure": "terraform destroy -var-file=azure.tfvars",
+    "destroy:gcp": "terraform destroy -var-file=gcp.tfvars",
+    "plan:aws": "terraform plan -var-file=aws.tfvars",
+    "plan:azure": "terraform plan -var-file=azure.tfvars",
+    "plan:gcp": "terraform plan -var-file=gcp.tfvars",
+    "validate": "terraform validate",
+    "fmt": "terraform fmt",
+    "docker:build": "docker build -t myapp .",
+    "docker:push": "docker push myapp",
+    "k8s:deploy": "kubectl apply -f k8s/",
+    "k8s:delete": "kubectl delete -f k8s/"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.5",
+    "typescript": "^5.0.4"
+  },
+  "terraform": {
+    "required_version": ">=1.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "~> 4.0"
+      },
+      "azurerm": {
+        "source": "hashicorp/azurerm",
+        "version": "~> 3.0"
+      },
+      "google": {
+        "source": "hashicorp/google",
+        "version": "~> 4.0"
+      },
+      "kubernetes": {
+        "source": "hashicorp/kubernetes",
+        "version": "~> 2.0"
+      },
+      "helm": {
+        "source": "hashicorp/helm",
+        "version": "~> 2.0"
+      }
+    },
+    "backend": {
+      "s3": {
+        "bucket": "terraform-state",
+        "key": "prod/terraform.tfstate",
+        "region": "us-west-2",
+        "encrypt": true,
+        "dynamodb_table": "terraform-locks"
+      }
+    }
+  },
+  "aws": {
+    "region": "us-west-2",
+    "vpc": {
+      "cidr": "10.0.0.0/16",
+      "azs": ["us-west-2a", "us-west-2b", "us-west-2c"],
+      "private_subnets": ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"],
+      "public_subnets": ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+    },
+    "eks": {
+      "cluster_name": "prod-cluster",
+      "cluster_version": "1.24",
+      "instance_types": ["t3.medium"]
+    },
+    "rds": {
+      "engine": "postgres",
+      "engine_version": "14.6",
+      "instance_class": "db.t3.medium",
+      "allocated_storage": 20
+    }
+  },
+  "azure": {
+    "location": "westus2",
+    "resource_group": "prod-rg",
+    "aks": {
+      "cluster_name": "prod-aks",
+      "kubernetes_version": "1.24.9",
+      "node_pool": {
+        "name": "default",
+        "node_count": 3,
+        "vm_size": "Standard_DS2_v2"
+      }
+    },
+    "database": {
+      "server_name": "prod-db",
+      "sku_name": "GP_Gen5_2"
+    }
+  },
+  "gcp": {
+    "project": "my-project",
+    "region": "us-central1",
+    "zone": "us-central1-a",
+    "gke": {
+      "cluster_name": "prod-gke",
+      "machine_type": "e2-medium",
+      "node_count": 3,
+      "min_master_version": "1.24"
+    },
+    "cloud_sql": {
+      "tier": "db-f1-micro",
+      "database_version": "POSTGRES_14"
+    }
+  },
+  "kubernetes": {
+    "namespace": "prod",
+    "resources": {
+      "deployment": {
+        "replicas": 3,
+        "strategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "maxSurge": 1,
+            "maxUnavailable": 0
+          }
+        },
+        "resources": {
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          },
+          "limits": {
+            "cpu": "200m",
+            "memory": "256Mi"
+          }
+        }
+      },
+      "service": {
+        "type": "ClusterIP",
+        "ports": [
+          {
+            "port": 80,
+            "targetPort": 3000
+          }
+        ]
+      },
+      "ingress": {
+        "annotations": {
+          "kubernetes.io/ingress.class": "nginx",
+          "cert-manager.io/cluster-issuer": "letsencrypt-prod"
+        }
+      }
+    }
+  },
+  "monitoring": {
+    "prometheus": {
+      "retention": "15d",
+      "scrape_interval": "15s"
+    },
+    "grafana": {
+      "version": "9.5.2",
+      "persistence": {
+        "enabled": true,
+        "size": "10Gi"
+      }
+    },
+    "loki": {
+      "retention": "30d",
+      "storage": {
+        "type": "s3",
+        "s3": {
+          "bucket": "logs-bucket"
+        }
+      }
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

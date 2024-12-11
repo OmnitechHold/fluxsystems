@@ -1,0 +1,125 @@
+{{- if .Values.istio.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ include "my-app.fullname" . }}-gateway
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        {{- range .Values.istio.gateway.hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      tls:
+        httpsRedirect: true
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        {{- range .Values.istio.gateway.hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      tls:
+        mode: SIMPLE
+        credentialName: {{ include "my-app.fullname" . }}-tls
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  hosts:
+    {{- range .Values.istio.virtualService.hosts }}
+    - {{ . | quote }}
+    {{- end }}
+  gateways:
+    - {{ include "my-app.fullname" . }}-gateway
+  http:
+    {{- toYaml .Values.istio.virtualService.http | nindent 4 }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  host: {{ include "my-app.fullname" . }}
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30ms
+      http:
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 10
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+      trafficPolicy:
+        loadBalancer:
+          simple: LEAST_CONN
+    - name: v2
+      labels:
+        version: v2
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/default/sa/default"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/api/public/*"]
+    - from:
+        - source:
+            principals: ["cluster.local/ns/{{ .Release.Namespace }}/sa/{{ include "my-app.serviceAccountName" . }}"]
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE"]
+            paths: ["/api/*"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    "3000":
+      mode: PERMISSIVE
+{{- end }}

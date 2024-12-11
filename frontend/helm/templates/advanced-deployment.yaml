@@ -1,0 +1,118 @@
+{{- if .Values.deployment.canary.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "my-app.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.app.service.targetPort }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.app.resources | nindent 12 }}
+  strategy:
+    canary:
+      steps:
+        {{- range .Values.deployment.canary.steps }}
+        - setWeight: {{ .weight }}
+        - pause:
+            duration: {{ .pause }}
+        {{- end }}
+      trafficRouting:
+        istio:
+          virtualService:
+            name: {{ include "my-app.fullname" . }}
+            routes:
+              - primary
+          destinationRule:
+            name: {{ include "my-app.fullname" . }}
+            canarySubsetName: canary
+            stableSubsetName: stable
+      analysis:
+        templates:
+          - templateName: success-rate
+        startingStep: 2
+        args:
+          - name: service-name
+            value: {{ include "my-app.fullname" . }}
+---
+{{- if .Values.deployment.progressiveDelivery.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  metrics:
+    {{- range .Values.deployment.progressiveDelivery.analysis.metrics }}
+    - name: {{ .name }}
+      interval: {{ .interval }}
+      successCondition: {{ .successCondition }}
+      failureCondition: {{ .failureCondition }}
+      provider:
+        prometheus:
+          address: http://prometheus-server.monitoring.svc.cluster.local:9090
+          query: |
+            {{- if eq .name "request-success-rate" }}
+            sum(rate(http_requests_total{job="{{ include "my-app.fullname" $ }}", status!~"5.*"}[1m])) 
+            /
+            sum(rate(http_requests_total{job="{{ include "my-app.fullname" $ }}"}[1m]))
+            {{- else if eq .name "request-duration" }}
+            histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="{{ include "my-app.fullname" $ }}"}[1m])) by (le))
+            {{- end }}
+    {{- end }}
+{{- end }}
+---
+{{- if .Values.deployment.blueGreen.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "my-app.fullname" . }}-{{ .Values.deployment.blueGreen.activeService }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.app.service.type }}
+  ports:
+    - port: {{ .Values.app.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "my-app.selectorLabels" . | nindent 4 }}
+    version: {{ .Values.deployment.blueGreen.activeService }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "my-app.fullname" . }}-{{ .Values.deployment.blueGreen.previewService }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.app.service.type }}
+  ports:
+    - port: {{ .Values.app.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "my-app.selectorLabels" . | nindent 4 }}
+    version: {{ .Values.deployment.blueGreen.previewService }}
+{{- end }}

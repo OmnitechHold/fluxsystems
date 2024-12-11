@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.app.config }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+type: Opaque
+data:
+  {{- range $key, $value := .Values.app.secrets }}
+  {{ $key }}: {{ $value | b64enc | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "my-app.serviceAccountName" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+{{- if .Values.app.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.app.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.app.persistence.size }}
+  storageClassName: {{ .Values.global.storageClass }}
+{{- end }}

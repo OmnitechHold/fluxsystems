@@ -1,0 +1,148 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Package.json",
+  "type": "object",
+  "required": ["name", "version"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the package.",
+      "pattern": "^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the package",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$"
+    },
+    "private": {
+      "type": "boolean",
+      "description": "If true, the package will not be published to npm"
+    },
+    "description": {
+      "type": "string",
+      "description": "Package description"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords related to the package"
+    },
+    "homepage": {
+      "type": "string",
+      "description": "Homepage URL",
+      "format": "uri"
+    },
+    "bugs": {
+      "type": ["string", "object"],
+      "description": "Issue tracker details",
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(\\^|~|>=|>|<=|<|=)?\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$|^(file|git|http|https):.*$|^\\*$"
+      }
+    },
+    "devDependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(\\^|~|>=|>|<=|<|=)?\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$|^(file|git|http|https):.*$|^\\*$"
+      }
+    },
+    "peerDependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(\\^|~|>=|>|<=|<|=)?\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$|^\\*$"
+      }
+    },
+    "scripts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "start": { "type": "string" },
+        "build": { "type": "string" },
+        "test": { "type": "string" },
+        "eject": { "type": "string" }
+      }
+    },
+    "browserslist": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "engines": {
+      "type": "object",
+      "properties": {
+        "node": { "type": "string" },
+        "npm": { "type": "string" }
+      }
+    },
+    "eslintConfig": {
+      "type": "object",
+      "properties": {
+        "extends": {
+          "type": ["string", "array"],
+          "items": {
+            "type": "string"
+          }
+        },
+        "rules": {
+          "type": "object"
+        }
+      }
+    },
+    "author": {
+      "type": ["string", "object"],
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "url": { "type": "string", "format": "uri" }
+      }
+    },
+    "license": {
+      "type": "string",
+      "description": "License of the package"
+    },
+    "repository": {
+      "type": ["string", "object"],
+      "properties": {
+        "type": { 
+          "type": "string",
+          "enum": ["git", "svn"]
+        },
+        "url": { "type": "string" },
+        "directory": { "type": "string" }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Files to be included in the package"
+    },
+    "main": {
+      "type": "string",
+      "description": "Entry point of the package"
+    },
+    "types": {
+      "type": "string",
+      "description": "TypeScript types definition file"
+    },
+    "proxy": {
+      "type": "string",
+      "description": "Development proxy configuration"
+    }
+  }
+}

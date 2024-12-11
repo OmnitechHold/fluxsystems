@@ -1,0 +1,42 @@
+{
+  "name": "fullstack-app-example",
+  "version": "1.0.0",
+  "description": "Example Full-stack TypeScript application with monorepo setup",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start": "turbo run start",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.26.1",
+    "turbo": "^1.9.8",
+    "typescript": "^5.0.4",
+    "prettier": "^2.8.8",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.2"
+  },
+  "packageManager": "pnpm@8.5.1",
+  "engines": {
+    "node": ">=16.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --write"
+    ]
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "printWidth": 100
+  }
+}

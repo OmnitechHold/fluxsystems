@@ -1,0 +1,225 @@
+# Global Values
+global:
+  environment: production
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: standard
+  nodeSelector: {}
+  tolerations: []
+
+# Application Configuration
+app:
+  name: my-app
+  replicaCount: 3
+  image:
+    repository: my-app
+    tag: latest
+    pullPolicy: Always
+  
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  # Pod Security Context
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  # Container Security Context
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    capabilities:
+      drop:
+        - ALL
+
+  # Liveness Probe
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  # Readiness Probe
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+    successThreshold: 1
+
+  # Service Configuration
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+    metricsPort: 9090
+
+  # Ingress Configuration
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    hosts:
+      - host: app.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: app-tls
+        hosts:
+          - app.example.com
+
+  # Autoscaling Configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  # Network Policies
+  networkPolicy:
+    enabled: true
+    ingressRules:
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                name: default
+        ports:
+          - protocol: TCP
+            port: 80
+
+  # Pod Disruption Budget
+  pdb:
+    enabled: true
+    minAvailable: 1
+
+  # Persistence Configuration
+  persistence:
+    enabled: true
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+  # Config and Secrets
+  config:
+    APP_ENV: production
+    API_URL: https://api.example.com
+    LOG_LEVEL: info
+
+  secrets:
+    API_KEY: ""
+    DB_PASSWORD: ""
+    JWT_SECRET: ""
+
+# Istio Configuration
+istio:
+  enabled: true
+  gateway:
+    enabled: true
+    hosts:
+      - app.example.com
+  virtualService:
+    enabled: true
+    hosts:
+      - app.example.com
+    http:
+      - route:
+          - destination:
+              host: my-app
+              subset: v1
+            weight: 90
+          - destination:
+              host: my-app
+              subset: v2
+            weight: 10
+
+# Monitoring Configuration
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 14s
+    path: /metrics
+
+# Dependencies Configuration
+postgresql:
+  enabled: true
+  auth:
+    username: app
+    database: app
+  primary:
+    persistence:
+      size: 10Gi
+
+redis:
+  enabled: true
+  auth:
+    enabled: true
+  master:
+    persistence:
+      size: 5Gi
+
+elasticsearch:
+  enabled: true
+  master:
+    replicaCount: 3
+    persistence:
+      size: 20Gi
+  data:
+    replicaCount: 3
+    persistence:
+      size: 50Gi
+
+prometheus:
+  enabled: true
+  alertmanager:
+    enabled: true
+    persistence:
+      size: 10Gi
+  server:
+    retention: 15d
+    persistentVolume:
+      size: 50Gi
+
+grafana:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 10Gi
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: default
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards
+
+cert-manager:
+  enabled: true
+  installCRDs: true
+  prometheus:
+    enabled: true
+  webhook:
+    timeoutSeconds: 30

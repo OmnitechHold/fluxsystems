@@ -1,0 +1,97 @@
+{
+  "name": "angular-app-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example Angular application with modern tooling and best practices",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "lint": "ng lint",
+    "e2e": "ng e2e",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "compodoc": "compodoc -p tsconfig.doc.json",
+    "analyze": "ng build --stats-json && webpack-bundle-analyzer dist/stats.json",
+    "prettier": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "storybook": "ng run angular-app:storybook",
+    "build-storybook": "ng run angular-app:build-storybook"
+  },
+  "dependencies": {
+    "@angular/animations": "^16.0.0",
+    "@angular/common": "^16.0.0",
+    "@angular/compiler": "^16.0.0",
+    "@angular/core": "^16.0.0",
+    "@angular/forms": "^16.0.0",
+    "@angular/platform-browser": "^16.0.0",
+    "@angular/platform-browser-dynamic": "^16.0.0",
+    "@angular/router": "^16.0.0",
+    "@angular/material": "^16.0.0",
+    "@ngrx/store": "^16.0.0",
+    "@ngrx/effects": "^16.0.0",
+    "@ngrx/entity": "^16.0.0",
+    "@ngrx/store-devtools": "^16.0.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.5.0",
+    "zone.js": "~0.13.0",
+    "@ngx-translate/core": "^15.0.0",
+    "@ngx-translate/http-loader": "^8.0.0",
+    "ngx-logger": "^5.0.12"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^16.0.0",
+    "@angular-eslint/builder": "^16.0.0",
+    "@angular-eslint/eslint-plugin": "^16.0.0",
+    "@angular-eslint/eslint-plugin-template": "^16.0.0",
+    "@angular-eslint/schematics": "^16.0.0",
+    "@angular-eslint/template-parser": "^16.0.0",
+    "@angular/cli": "^16.0.0",
+    "@angular/compiler-cli": "^16.0.0",
+    "@compodoc/compodoc": "^1.1.21",
+    "@storybook/angular": "^7.0.18",
+    "@types/jasmine": "~4.3.0",
+    "@types/node": "^20.2.5",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
+    "cypress": "^12.13.0",
+    "eslint": "^8.41.0",
+    "jasmine-core": "~4.6.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "ng-packagr": "^16.0.0",
+    "prettier": "^2.8.8",
+    "typescript": "~5.0.4",
+    "webpack-bundle-analyzer": "^4.8.0"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,html}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.scss": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "ng test --watch=false"
+    }
+  },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 Firefox versions",
+    "last 2 Edge versions",
+    "last 2 Safari versions"
+  ],
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

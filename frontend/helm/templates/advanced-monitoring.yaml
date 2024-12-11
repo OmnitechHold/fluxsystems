@@ -1,0 +1,160 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "my-app.fullname" . }}-advanced-metrics
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: frontend.performance
+      rules:
+        # Frontend Performance Metrics
+        - record: frontend:page_load_time:avg
+          expr: |
+            avg(rate(frontend_page_load_duration_seconds_sum[5m]))
+            /
+            avg(rate(frontend_page_load_duration_seconds_count[5m]))
+
+        - record: frontend:first_contentful_paint:p95
+          expr: histogram_quantile(0.95, sum(rate(frontend_fcp_seconds_bucket[5m])) by (le))
+
+        - record: frontend:largest_contentful_paint:p95
+          expr: histogram_quantile(0.95, sum(rate(frontend_lcp_seconds_bucket[5m])) by (le))
+
+        - record: frontend:first_input_delay:p95
+          expr: histogram_quantile(0.95, sum(rate(frontend_fid_seconds_bucket[5m])) by (le))
+
+        - record: frontend:cumulative_layout_shift:p95
+          expr: histogram_quantile(0.95, sum(rate(frontend_cls_score_bucket[5m])) by (le))
+
+    - name: frontend.errors
+      rules:
+        # Error Tracking
+        - record: frontend:error_rate:ratio
+          expr: |
+            sum(rate(frontend_errors_total[5m])) by (error_type, component)
+            /
+            sum(rate(frontend_requests_total[5m]))
+
+        - record: frontend:js_exceptions:count
+          expr: sum(increase(frontend_js_exceptions_total[5m])) by (error_type, component)
+
+    - name: frontend.resources
+      rules:
+        # Resource Usage
+        - record: frontend:memory_usage:bytes
+          expr: process_resident_memory_bytes{job="{{ include "my-app.fullname" . }}"}
+
+        - record: frontend:cpu_usage:percent
+          expr: |
+            rate(process_cpu_seconds_total{job="{{ include "my-app.fullname" . }}"}[5m]) * 100
+
+    - name: frontend.user_experience
+      rules:
+        # User Experience Metrics
+        - record: frontend:session_duration:avg
+          expr: |
+            avg(rate(frontend_session_duration_seconds_sum[5m]))
+            /
+            avg(rate(frontend_session_duration_seconds_count[5m]))
+
+        - record: frontend:bounce_rate:ratio
+          expr: |
+            sum(rate(frontend_bounced_sessions_total[5m]))
+            /
+            sum(rate(frontend_sessions_total[5m]))
+
+    - name: frontend.business
+      rules:
+        # Business Metrics
+        - record: frontend:conversion_rate:ratio
+          expr: |
+            sum(rate(frontend_successful_conversions_total[5m]))
+            /
+            sum(rate(frontend_conversion_attempts_total[5m]))
+
+        - record: frontend:revenue:total
+          expr: sum(frontend_revenue_cents_total) / 100
+
+    - name: frontend.alerts
+      rules:
+        # Performance Alerts
+        - alert: FrontendHighLoadTime
+          expr: frontend:page_load_time:avg > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: High page load time
+            description: Average page load time is above 3 seconds
+
+        - alert: FrontendHighErrorRate
+          expr: frontend:error_rate:ratio > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: High frontend error rate
+            description: Error rate is above 5%
+
+        - alert: FrontendMemoryLeak
+          expr: deriv(frontend:memory_usage:bytes[30m]) > 0
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Possible memory leak detected
+            description: Memory usage has been steadily increasing for 30 minutes
+
+        - alert: FrontendHighCPUUsage
+          expr: frontend:cpu_usage:percent > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: High CPU usage
+            description: CPU usage is above 80%
+
+        - alert: FrontendHighBounceRate
+          expr: frontend:bounce_rate:ratio > 0.6
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: High bounce rate
+            description: Bounce rate is above 60%
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "my-app.fullname" . }}-frontend
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: 'frontend_.+'
+          action: keep
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "my-app.fullname" . }}-frontend
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics

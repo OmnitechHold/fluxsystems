@@ -1,0 +1,136 @@
+{
+  "name": "ssr-config-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example SSR configuration with Next.js, Nuxt.js, and advanced features",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "analyze": "ANALYZE=true next build",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "test": "jest",
+    "e2e": "cypress run",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^4.29.7",
+    "@trpc/client": "^10.27.3",
+    "@trpc/next": "^10.27.3",
+    "@trpc/react-query": "^10.27.3",
+    "@trpc/server": "^10.27.3",
+    "next": "^13.4.3",
+    "next-auth": "^4.22.1",
+    "next-i18next": "^13.2.2",
+    "next-pwa": "^5.6.0",
+    "next-seo": "^6.0.0",
+    "next-sitemap": "^4.0.9",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "superjson": "^1.12.3",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.8",
+    "@next/bundle-analyzer": "^13.4.3",
+    "@storybook/addon-actions": "^7.0.12",
+    "@storybook/addon-essentials": "^7.0.12",
+    "@storybook/addon-links": "^7.0.12",
+    "@storybook/react": "^7.0.12",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
+    "@types/node": "^20.2.5",
+    "@types/react": "^18.2.7",
+    "@types/react-dom": "^18.2.4",
+    "autoprefixer": "^10.4.14",
+    "cypress": "^12.12.0",
+    "eslint": "^8.41.0",
+    "eslint-config-next": "^13.4.3",
+    "husky": "^8.0.3",
+    "jest": "^29.5.0",
+    "lint-staged": "^13.2.2",
+    "postcss": "^8.4.23",
+    "tailwindcss": "^3.3.2",
+    "typescript": "^5.0.4"
+  },
+  "nextConfig": {
+    "reactStrictMode": true,
+    "poweredByHeader": false,
+    "productionBrowserSourceMaps": true,
+    "i18n": {
+      "locales": ["en", "es", "fr"],
+      "defaultLocale": "en"
+    },
+    "images": {
+      "domains": ["images.example.com"],
+      "deviceSizes": [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+      "imageSizes": [16, 32, 48, 64, 96, 128, 256, 384]
+    },
+    "experimental": {
+      "serverActions": true,
+      "appDir": true
+    },
+    "compiler": {
+      "removeConsole": true
+    },
+    "headers": [
+      {
+        "source": "/:path*",
+        "headers": [
+          {
+            "key": "X-DNS-Prefetch-Control",
+            "value": "on"
+          },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=31536000; includeSubDomains"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "SAMEORIGIN"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-XSS-Protection",
+            "value": "1; mode=block"
+          }
+        ]
+      }
+    ]
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/jest.setup.js"],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

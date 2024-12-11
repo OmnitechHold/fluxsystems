@@ -1,0 +1,115 @@
+{
+  "name": "pwa-app-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example Progressive Web Application with modern tooling and offline capabilities",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "test": "vitest",
+    "test:e2e": "cypress run",
+    "test:e2e:dev": "cypress open",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write \"**/*.{ts,tsx,css,scss,md}\"",
+    "analyze": "source-map-explorer 'dist/**/*.js'",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "generate-pwa-assets": "pwa-assets-generator",
+    "workbox-build": "workbox-build",
+    "lighthouse": "lighthouse --view"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^4.29.7",
+    "@trpc/client": "^10.27.3",
+    "@trpc/react-query": "^10.27.3",
+    "@trpc/server": "^10.27.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.11.2",
+    "workbox-core": "^7.0.0",
+    "workbox-expiration": "^7.0.0",
+    "workbox-precaching": "^7.0.0",
+    "workbox-routing": "^7.0.0",
+    "workbox-strategies": "^7.0.0",
+    "workbox-window": "^7.0.0",
+    "idb": "^7.1.1",
+    "dexie": "^3.2.3",
+    "localforage": "^1.10.0",
+    "zod": "^3.21.4",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.13.2"
+  },
+  "devDependencies": {
+    "@storybook/addon-essentials": "^7.0.18",
+    "@storybook/addon-interactions": "^7.0.18",
+    "@storybook/addon-links": "^7.0.18",
+    "@storybook/blocks": "^7.0.18",
+    "@storybook/react": "^7.0.18",
+    "@storybook/react-vite": "^7.0.18",
+    "@storybook/testing-library": "^0.1.0",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/react": "^18.2.7",
+    "@types/react-dom": "^18.2.4",
+    "@types/serviceworker": "^0.0.67",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
+    "@vitejs/plugin-react": "^4.0.0",
+    "cypress": "^12.13.0",
+    "eslint": "^8.41.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.1",
+    "lighthouse": "^10.1.1",
+    "msw": "^1.2.1",
+    "prettier": "^2.8.8",
+    "sass": "^1.62.1",
+    "source-map-explorer": "^2.5.3",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.9",
+    "vite-plugin-pwa": "^0.15.1",
+    "vitest": "^0.31.1",
+    "workbox-build": "^7.0.0",
+    "workbox-cli": "^7.0.0"
+  },
+  "msw": {
+    "workerDirectory": "public"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "printWidth": 100
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(ts|tsx|js|jsx)$": "@swc/jest"
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.ts"
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

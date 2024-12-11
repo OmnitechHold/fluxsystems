@@ -1,0 +1,120 @@
+{{- if .Values.dr.enabled }}
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: {{ include "my-app.fullname" . }}-dr-backup
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  schedule: "*/1 * * * *"  # Every minute for testing, adjust as needed
+  template:
+    includedNamespaces:
+      - {{ .Release.Namespace }}
+    labelSelector:
+      matchLabels:
+        {{- include "my-app.selectorLabels" . | nindent 8 }}
+    storageLocation: dr-storage
+    volumeSnapshotLocations:
+      - dr-snapshot
+    ttl: 24h
+---
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: dr-storage
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  provider: aws
+  objectStorage:
+    bucket: {{ include "my-app.fullname" . }}-dr-backup
+    prefix: {{ .Release.Namespace }}
+  config:
+    region: {{ .Values.dr.replication.targetRegion }}
+---
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: dr-snapshot
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  provider: aws
+  config:
+    region: {{ .Values.dr.replication.targetRegion }}
+---
+{{- if .Values.dr.failover.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "my-app.fullname" . }}-dr-alerts
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: {{ include "my-app.fullname" . }}.dr.rules
+      rules:
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_requests_total{job="{{ include "my-app.fullname" . }}", status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="{{ include "my-app.fullname" . }}"}[5m])) > 0.1
+          for: 5m
+          labels:
+            severity: critical
+            type: failover
+          annotations:
+            summary: High error rate detected
+            description: More than 10% of requests are failing
+
+        - alert: ServiceDown
+          expr: up{job="{{ include "my-app.fullname" . }}"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            type: failover
+          annotations:
+            summary: Service is down
+            description: The service has been down for more than 5 minutes
+
+        - alert: HighLatency
+          expr: |
+            histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="{{ include "my-app.fullname" . }}"}[5m])) by (le)) > 2
+          for: 5m
+          labels:
+            severity: warning
+            type: failover
+          annotations:
+            summary: High latency detected
+            description: 95th percentile latency is above 2 seconds
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "my-app.fullname" . }}-health-check
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  schedule: "*/1 * * * *"  # Every minute
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: health-check
+              image: curlimages/curl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  response=$(curl -s -w "%{http_code}" http://{{ include "my-app.fullname" . }}/health)
+                  if [ "$response" != "200" ]; then
+                    echo "Health check failed with response: $response"
+                    exit 1
+                  fi
+          restartPolicy: Never
+{{- end }}
+{{- end }}

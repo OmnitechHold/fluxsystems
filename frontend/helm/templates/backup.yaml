@@ -1,0 +1,46 @@
+{{- if .Values.backup.enabled }}
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: {{ include "my-app.fullname" . }}-backup
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  template:
+    hooks: {}
+    includedNamespaces:
+      - {{ .Release.Namespace }}
+    labelSelector:
+      matchLabels:
+        {{- include "my-app.selectorLabels" . | nindent 8 }}
+    storageLocation: default
+    ttl: {{ .Values.backup.ttl }}
+    volumeSnapshotLocations:
+      - default
+---
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: {{ include "my-app.fullname" . }}-storage
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  provider: aws
+  objectStorage:
+    bucket: {{ .Values.backup.bucket }}
+    prefix: {{ include "my-app.fullname" . }}
+  config:
+    region: {{ .Values.backup.region }}
+---
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: {{ include "my-app.fullname" . }}-snapshot
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  provider: aws
+  config:
+    region: {{ .Values.backup.region }}
+{{- end }}

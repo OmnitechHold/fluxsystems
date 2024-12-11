@@ -1,0 +1,106 @@
+{
+  "name": "deployment-config-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example deployment configuration with Docker, Kubernetes, and cloud services",
+  "scripts": {
+    "docker:build": "docker build -t myapp .",
+    "docker:push": "docker push myapp",
+    "k8s:deploy": "kubectl apply -f k8s/",
+    "k8s:delete": "kubectl delete -f k8s/",
+    "aws:deploy": "aws cloudformation deploy --template-file infrastructure/aws.yml --stack-name myapp",
+    "azure:deploy": "az deployment group create --resource-group myapp --template-file infrastructure/azure.json",
+    "gcp:deploy": "gcloud deployment-manager deployments create myapp --config infrastructure/gcp.yaml",
+    "terraform:init": "terraform init",
+    "terraform:plan": "terraform plan",
+    "terraform:apply": "terraform apply -auto-approve",
+    "terraform:destroy": "terraform destroy -auto-approve",
+    "helm:install": "helm install myapp ./helm/myapp",
+    "helm:upgrade": "helm upgrade myapp ./helm/myapp",
+    "helm:uninstall": "helm uninstall myapp",
+    "deploy:staging": "npm run docker:build && npm run docker:push && npm run k8s:deploy -- -f k8s/staging/",
+    "deploy:prod": "npm run docker:build && npm run docker:push && npm run k8s:deploy -- -f k8s/production/"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^0.18.1",
+    "@aws-sdk/client-cloudformation": "^3.341.0",
+    "@aws-sdk/client-s3": "^3.341.0",
+    "@azure/arm-resources": "^5.2.0",
+    "@google-cloud/deployment-manager": "^4.0.2",
+    "dotenv": "^16.0.3",
+    "winston": "^3.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.5",
+    "typescript": "^5.0.4",
+    "@types/jest": "^29.5.1",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "eslint": "^8.41.0",
+    "prettier": "^2.8.8",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7"
+  },
+  "docker": {
+    "registryUrl": "registry.example.com",
+    "image": "myapp",
+    "tag": "latest"
+  },
+  "kubernetes": {
+    "namespace": "myapp",
+    "deploymentName": "myapp",
+    "serviceName": "myapp-service",
+    "ingressName": "myapp-ingress"
+  },
+  "aws": {
+    "region": "us-west-2",
+    "stackName": "myapp",
+    "s3Bucket": "myapp-artifacts"
+  },
+  "azure": {
+    "resourceGroup": "myapp-rg",
+    "location": "westus2",
+    "appServicePlan": "myapp-plan"
+  },
+  "gcp": {
+    "project": "myapp-project",
+    "zone": "us-central1-a",
+    "cluster": "myapp-cluster"
+  },
+  "terraform": {
+    "backend": {
+      "type": "s3",
+      "bucket": "terraform-state",
+      "key": "myapp/terraform.tfstate",
+      "region": "us-west-2"
+    },
+    "providers": [
+      "aws",
+      "google",
+      "azurerm"
+    ]
+  },
+  "helm": {
+    "repository": "https://charts.example.com",
+    "chart": "myapp",
+    "version": "1.0.0"
+  },
+  "monitoring": {
+    "prometheus": {
+      "enabled": true,
+      "scrapeInterval": "15s"
+    },
+    "grafana": {
+      "enabled": true,
+      "dashboards": ["kubernetes", "application"]
+    },
+    "elasticSearch": {
+      "enabled": true,
+      "retention": "7d"
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

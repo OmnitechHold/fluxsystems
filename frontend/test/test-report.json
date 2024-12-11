@@ -1,0 +1,123 @@
+{
+  "timestamp": "2024-12-07T10:27:56.625Z",
+  "results": {
+    "passed": 4,
+    "failed": 9,
+    "details": [
+      {
+        "name": "validBasic",
+        "valid": true,
+        "errors": null
+      },
+      {
+        "name": "validReactApp",
+        "valid": true,
+        "errors": null
+      },
+      {
+        "name": "validNodeBackend",
+        "valid": true,
+        "errors": null
+      },
+      {
+        "name": "validComplexName",
+        "valid": true,
+        "errors": null
+      },
+      {
+        "name": "validVersionRanges",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/dependencies/package3",
+            "message": "must match pattern \"^(\\^|~|>=|>|<=|<|=)?\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$|^(file|git|http|https):.*$|^\\*$\""
+          }
+        ]
+      },
+      {
+        "name": "invalidNameUppercase",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/name",
+            "message": "must match pattern \"^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$\""
+          }
+        ]
+      },
+      {
+        "name": "invalidNameSpaces",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/name",
+            "message": "must match pattern \"^(?:@[a-z0-9-*~][a-z0-9-*._~]*/)?[a-z0-9-~][a-z0-9-._~]*$\""
+          }
+        ]
+      },
+      {
+        "name": "invalidVersionFormat",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/version",
+            "message": "must match pattern \"^\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$\""
+          }
+        ]
+      },
+      {
+        "name": "invalidSemver",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/version",
+            "message": "must match pattern \"^\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$\""
+          }
+        ]
+      },
+      {
+        "name": "invalidDependencyVersion",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/dependencies/package",
+            "message": "must match pattern \"^(\\^|~|>=|>|<=|<|=)?\\d+\\.\\d+\\.\\d+(?:-[\\w.-]+)?(?:\\+[\\w.-]+)?$|^(file|git|http|https):.*$|^\\*$\""
+          }
+        ]
+      },
+      {
+        "name": "invalidEmail",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/author/email",
+            "message": "must match format \"email\""
+          }
+        ]
+      },
+      {
+        "name": "invalidUrl",
+        "valid": false,
+        "errors": [
+          {
+            "field": "/homepage",
+            "message": "must match format \"uri\""
+          }
+        ]
+      },
+      {
+        "name": "missingRequired",
+        "valid": false,
+        "errors": [
+          {
+            "field": "",
+            "message": "must have required property 'name'"
+          },
+          {
+            "field": "",
+            "message": "must have required property 'version'"
+          }
+        ]
+      }
+    ]
+  }
+}

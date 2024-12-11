@@ -1,0 +1,148 @@
+{{- if .Values.security.enabled }}
+apiVersion: policy/v1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ include "my-app.fullname" . }}-psp
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: true
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "my-app.fullname" . }}-tls
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "my-app.fullname" . }}-tls
+  duration: 2160h # 90 days
+  renewBefore: 360h # 15 days
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  dnsNames:
+    {{- range .Values.app.ingress.hosts }}
+    - {{ .host | quote }}
+    {{- end }}
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: {{ include "my-app.fullname" . }}-jwt
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  jwtRules:
+    - issuer: "https://{{ .Values.security.auth.issuer }}"
+      jwksUri: "https://{{ .Values.security.auth.issuer }}/.well-known/jwks.json"
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: {{ include "my-app.fullname" . }}-rbac
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  rules:
+    - from:
+        - source:
+            requestPrincipals: ["*"]
+      to:
+        - operation:
+            methods: ["GET"]
+            paths: ["/api/public/*"]
+    - from:
+        - source:
+            requestPrincipals: ["*"]
+        - source:
+            namespaces: ["{{ .Release.Namespace }}"]
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE"]
+            paths: ["/api/*"]
+      when:
+        - key: request.auth.claims[roles]
+          values: ["admin"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "my-app.fullname" . }}-egress
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+    - to:
+        - ipBlock:
+            cidr: {{ .Values.security.allowedEgressCIDR }}
+            except:
+              - 169.254.0.0/16
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
+{{- end }}

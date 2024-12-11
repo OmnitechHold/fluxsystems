@@ -1,0 +1,155 @@
+{
+  "name": "graphql-config-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example GraphQL configuration with Apollo, Code Generation, and advanced tooling",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "codegen": "graphql-codegen --config codegen.yml",
+    "codegen:watch": "graphql-codegen --config codegen.yml --watch",
+    "test": "jest",
+    "lint": "eslint . --ext .ts,.tsx",
+    "type-check": "tsc --noEmit",
+    "schema:download": "apollo service:download --endpoint=http://localhost:4000/graphql schema.graphql",
+    "schema:generate-types": "apollo codegen:generate --localSchemaFile=schema.graphql --target=typescript --tagName=gql",
+    "schema:check": "apollo service:check",
+    "schema:push": "apollo service:push",
+    "graphql:validate": "graphql-inspector validate ./schema.graphql",
+    "graphql:diff": "graphql-inspector diff ./schema.graphql ./schema.graphql.backup",
+    "graphql:coverage": "graphql-inspector coverage ./schema.graphql './src/**/*.graphql'",
+    "studio:dev": "apollo studio:dev",
+    "gateway:start": "apollo gateway:start"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.7.14",
+    "@apollo/gateway": "^2.4.8",
+    "@apollo/server": "^4.7.1",
+    "@graphql-tools/schema": "^9.0.19",
+    "@graphql-tools/utils": "^9.2.1",
+    "dataloader": "^2.2.2",
+    "graphql": "^16.6.0",
+    "graphql-scalars": "^1.22.2",
+    "graphql-subscriptions": "^2.0.0",
+    "graphql-ws": "^5.13.1",
+    "next": "^13.4.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "type-graphql": "^2.0.0-beta.2",
+    "urql": "^4.0.3"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^3.3.1",
+    "@graphql-codegen/typescript": "^3.0.4",
+    "@graphql-codegen/typescript-operations": "^3.0.4",
+    "@graphql-codegen/typescript-react-apollo": "^3.3.7",
+    "@graphql-eslint/eslint-plugin": "^3.19.1",
+    "@graphql-inspector/cli": "^4.0.2",
+    "@graphql-tools/mock": "^8.7.20",
+    "@types/node": "^20.2.5",
+    "@types/react": "^18.2.7",
+    "@types/react-dom": "^18.2.4",
+    "apollo": "^2.34.0",
+    "eslint": "^8.41.0",
+    "graphql-config": "^4.5.0",
+    "graphql-tag": "^2.12.6",
+    "jest": "^29.5.0",
+    "typescript": "^5.0.4"
+  },
+  "graphql": {
+    "schema": "./schema.graphql",
+    "documents": ["./src/**/*.graphql", "./src/**/*.tsx"],
+    "extensions": {
+      "codegen": {
+        "generates": {
+          "./src/generated/graphql.ts": {
+            "plugins": [
+              "typescript",
+              "typescript-operations",
+              "typescript-react-apollo"
+            ],
+            "config": {
+              "withHooks": true,
+              "withComponent": false,
+              "withHOC": false,
+              "skipTypename": false,
+              "dedupeFragments": true
+            }
+          }
+        }
+      },
+      "endpoints": {
+        "default": {
+          "url": "http://localhost:4000/graphql",
+          "headers": {
+            "Authorization": "${env:API_TOKEN}"
+          }
+        },
+        "staging": {
+          "url": "https://staging.api.example.com/graphql"
+        },
+        "production": {
+          "url": "https://api.example.com/graphql"
+        }
+      }
+    }
+  },
+  "apollo": {
+    "client": {
+      "service": {
+        "name": "my-graphql-app",
+        "localSchemaFile": "./schema.graphql"
+      },
+      "includes": ["./src/**/*.tsx", "./src/**/*.ts"],
+      "excludes": ["**/__tests__/**"]
+    },
+    "gateway": {
+      "serviceList": [
+        {
+          "name": "users",
+          "url": "http://localhost:4001/graphql"
+        },
+        {
+          "name": "products",
+          "url": "http://localhost:4002/graphql"
+        },
+        {
+          "name": "orders",
+          "url": "http://localhost:4003/graphql"
+        }
+      ]
+    }
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest",
+      "^.+\\.graphql$": "graphql-jest"
+    },
+    "setupFilesAfterEnv": ["<rootDir>/src/setupTests.ts"]
+  },
+  "eslintConfig": {
+    "plugins": ["@graphql-eslint"],
+    "overrides": [
+      {
+        "files": ["*.graphql"],
+        "parser": "@graphql-eslint/eslint-plugin",
+        "plugins": ["@graphql-eslint"],
+        "rules": {
+          "@graphql-eslint/no-anonymous-operations": "error",
+          "@graphql-eslint/naming-convention": [
+            "error",
+            {
+              "types": "PascalCase",
+              "enumMembers": "UPPER_CASE"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

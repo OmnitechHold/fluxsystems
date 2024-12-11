@@ -1,0 +1,195 @@
+{
+  "name": "monitoring-config-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example monitoring configuration with ELK Stack, Prometheus, and Grafana",
+  "scripts": {
+    "start:prometheus": "docker-compose -f docker/prometheus/docker-compose.yml up -d",
+    "start:grafana": "docker-compose -f docker/grafana/docker-compose.yml up -d",
+    "start:elk": "docker-compose -f docker/elk/docker-compose.yml up -d",
+    "start:all": "docker-compose -f docker/monitoring/docker-compose.yml up -d",
+    "stop:all": "docker-compose -f docker/monitoring/docker-compose.yml down",
+    "logs": "docker-compose -f docker/monitoring/docker-compose.yml logs -f",
+    "metrics:export": "node scripts/export-metrics.js",
+    "alerts:test": "promtool test rules alerts/*.yml"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.7.0",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.37.0",
+    "@opentelemetry/exporter-prometheus": "^0.41.0",
+    "@opentelemetry/sdk-node": "^0.41.0",
+    "pino": "^8.14.1",
+    "prom-client": "^14.2.0",
+    "winston": "^3.8.2",
+    "winston-elasticsearch": "^0.17.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.5",
+    "typescript": "^5.0.4"
+  },
+  "monitoring": {
+    "prometheus": {
+      "port": 9090,
+      "scrapeInterval": "15s",
+      "evaluationInterval": "15s",
+      "global": {
+        "scrape_interval": "15s",
+        "evaluation_interval": "15s"
+      },
+      "alerting": {
+        "alertmanagers": [
+          {
+            "static_configs": [
+              {
+                "targets": ["alertmanager:9093"]
+              }
+            ]
+          }
+        ]
+      },
+      "rule_files": [
+        "/etc/prometheus/rules/*.yml"
+      ]
+    },
+    "grafana": {
+      "port": 3000,
+      "auth": {
+        "disable_login_form": false,
+        "disable_signout_menu": false
+      },
+      "analytics": {
+        "reporting_enabled": false,
+        "check_for_updates": true
+      },
+      "security": {
+        "admin_user": "admin",
+        "admin_password": "${env:GRAFANA_PASSWORD}"
+      }
+    },
+    "elasticsearch": {
+      "node": "http://elasticsearch:9200",
+      "auth": {
+        "username": "elastic",
+        "password": "${env:ELASTIC_PASSWORD}"
+      },
+      "indices": {
+        "app-logs": {
+          "mappings": {
+            "properties": {
+              "timestamp": { "type": "date" },
+              "level": { "type": "keyword" },
+              "message": { "type": "text" },
+              "service": { "type": "keyword" },
+              "trace_id": { "type": "keyword" }
+            }
+          }
+        }
+      }
+    },
+    "kibana": {
+      "port": 5601,
+      "elasticsearch": {
+        "hosts": ["http://elasticsearch:9200"]
+      }
+    },
+    "alertmanager": {
+      "port": 9093,
+      "config": {
+        "global": {
+          "resolve_timeout": "5m"
+        },
+        "route": {
+          "group_by": ["alertname", "cluster", "service"],
+          "group_wait": "30s",
+          "group_interval": "5m",
+          "repeat_interval": "12h",
+          "receiver": "default"
+        },
+        "receivers": [
+          {
+            "name": "default",
+            "email_configs": [
+              {
+                "to": "alerts@example.com",
+                "from": "alertmanager@example.com",
+                "smarthost": "smtp.example.com:587",
+                "auth_username": "${env:SMTP_USERNAME}",
+                "auth_password": "${env:SMTP_PASSWORD}"
+              }
+            ],
+            "slack_configs": [
+              {
+                "api_url": "${env:SLACK_WEBHOOK_URL}",
+                "channel": "#alerts",
+                "send_resolved": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "transports": [
+      {
+        "type": "console",
+        "handleExceptions": true
+      },
+      {
+        "type": "elasticsearch",
+        "level": "info",
+        "clientOpts": {
+          "node": "http://elasticsearch:9200",
+          "auth": {
+            "username": "elastic",
+            "password": "${env:ELASTIC_PASSWORD}"
+          }
+        },
+        "indexPrefix": "app-logs"
+      }
+    ]
+  },
+  "tracing": {
+    "serviceName": "my-app",
+    "samplingRatio": 1,
+    "exporters": {
+      "jaeger": {
+        "endpoint": "http://jaeger:14268/api/traces"
+      }
+    }
+  },
+  "metrics": {
+    "prefix": "app_",
+    "defaultLabels": {
+      "service": "my-app"
+    },
+    "collectors": {
+      "http": {
+        "requestDurationSeconds": {
+          "type": "histogram",
+          "help": "Duration of HTTP requests in seconds",
+          "labelNames": ["method", "route", "status_code"],
+          "buckets": [0.1, 0.5, 1, 2, 5]
+        },
+        "requestsTotalCounter": {
+          "type": "counter",
+          "help": "Total number of HTTP requests",
+          "labelNames": ["method", "route", "status_code"]
+        }
+      },
+      "memory": {
+        "heapUsedBytes": {
+          "type": "gauge",
+          "help": "Node.js heap memory used in bytes"
+        }
+      }
+    }
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

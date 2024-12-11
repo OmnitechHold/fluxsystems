@@ -1,0 +1,14 @@
+{
+  "name": "flux-funeral-services",
+  "version": "1.0.0",
+  "description": "Comprehensive funeral service management platform",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"cd backend && python app.py\" \"cd frontend && npm start\"",
+    "install-deps": "npm install && cd frontend && npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "concurrently": "^7.0.0"
+  }
+}

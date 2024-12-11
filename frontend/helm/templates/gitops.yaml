@@ -1,0 +1,101 @@
+{{- if .Values.gitops.enabled }}
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  interval: 1m
+  url: {{ .Values.gitops.repository }}
+  ref:
+    branch: {{ .Values.gitops.branch }}
+  secretRef:
+    name: {{ include "my-app.fullname" . }}-git-credentials
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: ./helm
+      sourceRef:
+        kind: GitRepository
+        name: {{ include "my-app.fullname" . }}
+  values:
+    replicaCount: {{ .Values.app.replicaCount }}
+    image:
+      repository: {{ .Values.app.image.repository }}
+      tag: {{ .Values.app.image.tag }}
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+    crds: CreateReplace
+  test:
+    enable: true
+  rollback:
+    enable: true
+    force: false
+    recreate: false
+    cleanupOnFail: true
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageRepository
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  image: {{ .Values.app.image.repository }}
+  interval: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImagePolicy
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  imageRepositoryRef:
+    name: {{ include "my-app.fullname" . }}
+  policy:
+    semver:
+      range: '>=1.0.0'
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: {{ include "my-app.fullname" . }}-slack
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  type: slack
+  channel: {{ .Values.gitops.notifications.slack.channel }}
+  secretRef:
+    name: {{ include "my-app.fullname" . }}-slack-url
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Alert
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  providerRef:
+    name: {{ include "my-app.fullname" . }}-slack
+  eventSeverity: info
+  eventSources:
+    - kind: GitRepository
+      name: {{ include "my-app.fullname" . }}
+    - kind: HelmRelease
+      name: {{ include "my-app.fullname" . }}
+  suspend: false
+{{- end }}

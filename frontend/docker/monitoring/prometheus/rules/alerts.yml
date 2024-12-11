@@ -1,0 +1,56 @@
+groups:
+  - name: app
+    rules:
+      - alert: HighRequestLatency
+        expr: http_request_duration_seconds{quantile="0.9"} > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High request latency on {{ $labels.instance }}
+          description: "90th percentile of request latency is above 1s\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High error rate on {{ $labels.instance }}
+          description: "Error rate is above 10%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High memory usage on {{ $labels.instance }}
+          description: "Memory usage is above 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage on {{ $labels.instance }}
+          description: "CPU usage is above 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Service {{ $labels.job }} is down
+          description: "Service has been down for more than 1 minute."
+
+      - alert: HighDiskUsage
+        expr: node_filesystem_avail_bytes / node_filesystem_size_bytes * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High disk usage on {{ $labels.instance }}
+          description: "Disk usage is above 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

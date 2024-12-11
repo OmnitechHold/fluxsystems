@@ -1,0 +1,124 @@
+{
+  "name": "react-native-app-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example React Native application with TypeScript and modern tooling",
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json}\"",
+    "pod-install": "cd ios && pod install",
+    "clean": "rm -rf node_modules && yarn cache clean && cd ios && pod deintegrate && rm -rf build Pods Podfile.lock && cd ../android && ./gradlew clean",
+    "build:android": "cd android && ./gradlew assembleRelease",
+    "build:ios": "cd ios && xcodebuild -workspace MyApp.xcworkspace -scheme MyApp -configuration Release",
+    "storybook": "start-storybook -p 7007",
+    "prestorybook": "rnstl",
+    "test:e2e": "detox test -c ios.sim.debug",
+    "build:e2e": "detox build -c ios.sim.debug",
+    "type-check": "tsc --noEmit",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.18.1",
+    "@react-native-community/netinfo": "^9.3.10",
+    "@react-navigation/bottom-tabs": "^6.5.7",
+    "@react-navigation/native": "^6.1.6",
+    "@react-navigation/native-stack": "^6.9.12",
+    "@reduxjs/toolkit": "^1.9.5",
+    "react": "18.2.0",
+    "react-native": "0.71.8",
+    "react-native-config": "^1.5.1",
+    "react-native-device-info": "^10.6.0",
+    "react-native-fast-image": "^8.6.3",
+    "react-native-gesture-handler": "^2.10.1",
+    "react-native-keychain": "^8.1.1",
+    "react-native-reanimated": "^3.1.0",
+    "react-native-safe-area-context": "^4.5.3",
+    "react-native-screens": "^3.20.0",
+    "react-native-splash-screen": "^3.3.0",
+    "react-native-svg": "^13.9.0",
+    "react-redux": "^8.0.5",
+    "redux-persist": "^6.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.21.8",
+    "@babel/preset-env": "^7.21.5",
+    "@babel/runtime": "^7.21.5",
+    "@react-native-community/eslint-config": "^3.2.0",
+    "@storybook/addon-actions": "^7.0.18",
+    "@storybook/addon-controls": "^7.0.18",
+    "@storybook/addon-ondevice-actions": "^6.5.3",
+    "@storybook/addon-ondevice-controls": "^6.5.3",
+    "@storybook/react-native": "^6.5.3",
+    "@testing-library/jest-native": "^5.4.2",
+    "@testing-library/react-native": "^12.1.2",
+    "@types/jest": "^29.5.1",
+    "@types/react": "^18.2.7",
+    "@types/react-native": "^0.72.2",
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
+    "babel-jest": "^29.5.0",
+    "babel-loader": "^9.1.2",
+    "babel-plugin-module-resolver": "^5.0.0",
+    "detox": "^20.9.0",
+    "eslint": "^8.41.0",
+    "jest": "^29.5.0",
+    "metro-react-native-babel-preset": "0.76.5",
+    "patch-package": "^7.0.0",
+    "postinstall-postinstall": "^2.1.0",
+    "prettier": "^2.8.8",
+    "react-native-storybook-loader": "^2.0.5",
+    "react-test-renderer": "18.2.0",
+    "typescript": "^5.0.4"
+  },
+  "jest": {
+    "preset": "react-native",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ],
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-native/extend-expect"
+    ],
+    "transformIgnorePatterns": [
+      "node_modules/(?!(jest-)?react-native|@react-native|@react-navigation)"
+    ]
+  },
+  "detox": {
+    "configurations": {
+      "ios.sim.debug": {
+        "binaryPath": "ios/build/Build/Products/Debug-iphonesimulator/MyApp.app",
+        "build": "xcodebuild -workspace ios/MyApp.xcworkspace -scheme MyApp -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build",
+        "type": "ios.simulator",
+        "device": {
+          "type": "iPhone 12"
+        }
+      },
+      "android.emu.debug": {
+        "binaryPath": "android/app/build/outputs/apk/debug/app-debug.apk",
+        "build": "cd android && ./gradlew assembleDebug assembleAndroidTest -DtestBuildType=debug",
+        "type": "android.emulator",
+        "device": {
+          "avdName": "Pixel_3a_API_30_x86"
+        }
+      }
+    },
+    "test-runner": "jest"
+  },
+  "rnpm": {
+    "assets": [
+      "./assets/fonts/"
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
